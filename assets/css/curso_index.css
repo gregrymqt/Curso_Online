@@ -1,0 +1,172 @@
+ /* Reset and base styles */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        font-family: 'Roboto', sans-serif;
+        line-height: 1.6;
+    }
+    
+    /* Header styles */
+    .cabecalho-curso {
+        width: 100%;
+        background-color: #f8f9fa;
+        padding: 20px 0;
+    }
+    
+    .cabecalho-curso__container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+    
+    .cabecalho-curso__banner {
+        width: 100%;
+        max-width: 800px;
+        border-radius: 15px; /* Rounded corners */
+        margin-bottom: 20px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .cabecalho-curso__titulo {
+        margin: 10px 0;
+        color: #333;
+        font-size: 1.8rem;
+    }
+    
+    .cabecalho-curso__subtitulo {
+        margin-top: 5px;
+        color: #666;
+        font-size: 1rem;
+    }
+    
+    /* Marketing page layout */
+    .marketing-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .marketing-content {
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+    }
+    
+    .marketing-content section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .marketing-content img {
+        width: 40%;
+        max-width: 200px;
+        height: auto;
+        object-fit: cover;
+        aspect-ratio: 1/1; /* Ensures perfect circle */
+        margin-bottom: 20px;
+        border: 3px solid #f0f0f0;
+    }
+    
+    .marketing-content h2 {
+        margin-bottom: 15px;
+        color: #2c3e50;
+    }
+    
+    .marketing-content p {
+        color: #666;
+        max-width: 500px;
+    }
+        /* Previous styles remain the same */
+    
+    .section-button {
+        display: inline-block;
+        padding: 10px 25px;
+        background-color: #3498db;
+        color: white;
+        text-decoration: none;
+        border-radius: 30px;
+        font-weight: bold;
+        margin-top: 20px;
+        transition: background-color 0.3s;
+    }
+    
+    .section-button:hover {
+        background-color: #2980b9;
+    }
+    
+    /* CTA section */
+    .cta-section {
+        text-align: center;
+        padding: 30px;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        margin-top: 20px;
+    }
+    
+    .cta-button {
+        display: inline-block;
+        padding: 12px 30px;
+        background-color: #3498db;
+        color: white;
+        text-decoration: none;
+        border-radius: 30px;
+        font-weight: bold;
+        margin-top: 15px;
+        transition: background-color 0.3s;
+    }
+    
+    .cta-button:hover {
+        background-color: #2980b9;
+    }
+    
+    /* Footer */
+    footer {
+        text-align: center;
+        padding: 20px;
+        margin-top: 40px;
+        color: #666;
+        border-top: 1px solid #eee;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .cabecalho-curso__titulo {
+            font-size: 1.5rem;
+        }
+        
+        .marketing-content section {
+            padding: 15px;
+        }
+        
+        .marketing-content img {
+            max-width: 150px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .cabecalho-curso__titulo {
+            font-size: 1.3rem;
+        }
+        
+        .marketing-content img {
+            max-width: 100px;
+        }
+        
+        .cta-section {
+            padding: 20px 15px;
+        }
+    }
