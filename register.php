@@ -44,33 +44,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($stmt->execute([$nome, $email, $senha_hash, $telefone])) {
                     $user_id = $conn->lastInsertId(); // Changed from $pdo to $conn
 
-                    // Generate WhatsApp token
-                    $token = bin2hex(random_bytes(16));
-
-                    $stmt = $conn->prepare("UPDATE usuarios SET token_whatsapp = ? WHERE id = ?");
-                    if (!$stmt) {
-                        throw new Exception("Prepare statement failed");
-                    }
-
                     if ($stmt->execute([$token, $user_id])) {
                         // Armazena os dados do usuário e produto na sessão para uso posterior
                         $_SESSION['mercado_pago_data'] = [
                             'user_id' => $user_id,
-                            'produto_nome' => "Nome do Produto", // Substitua pelo nome real
+                            'username' => $nome,
+                            'email' => $email,
+                            'produto_nome' => "Curso Online", // Substitua pelo nome real
                             'produto_preco' => 100.00, // Substitua pelo preço real
                             'token' => $token
                         ];
 
-                        // Cria a mensagem do WhatsApp
-                        $whatsapp_number = preg_replace('/[^0-9]/', '', '13996243198');
-                        $message = "Olá, quero continuar com o pagamento!\n\n"
-                            . "Token: $token\n\n"
-                            . "Por favor, clique em uma opção:\n"
-                            . "✅ [Sim - Confirmar pagamento](" . "https://seusite.com/processa_resposta.php?token=$token&resposta=sim)\n"
-                            . "❌ [Não - Cancelar](" . "https://seusite.com/processa_resposta.php?token=$token&resposta=nao)";
-
-                        $whatsapp_url = "https://wa.me/{$whatsapp_number}?text=" . urlencode($message);
-                        header("Location: " . $whatsapp_url);
+                     header("Location: Processa_Api.php/Metodo_Pagamento.php");
                         exit;
                     }
                 } else {
@@ -83,8 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // If there are errors, you should handle them (show to user, log, etc.)
-    // For example, store in session and redirect back to form
+    
     $_SESSION['form_errors'] = $errors;
     $_SESSION['form_data'] = $_POST;
     header("Location: register.php");
