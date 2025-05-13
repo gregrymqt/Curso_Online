@@ -68,7 +68,7 @@ $produto_nome = 100;
                 'produto_preco' => $amount, // Substitua pelo preço real
                 'token' => $token
             ];
-            header('Location: api/preference.php');
+            header('Location: api/preferences.php');
             exit();
         } elseif (isset($_POST['cartao'])) {
             $_SESSION['mercado_pago_data'] = [
@@ -79,7 +79,7 @@ $produto_nome = 100;
                 'produto_preco' => $amount, // Substitua pelo preço real
                 'token' => $token
             ];
-            header('Location: api/cartao.php');
+            header('Location: api/card.php');
             exit();
         } else {
             // Nenhum método selecionado
