@@ -1,63 +1,80 @@
 <?php
-require_once 'includes/db_connect.php';
-require_once 'class/Validator.php';
+// Inicie a sessão no TOPO do arquivo, antes de qualquer saída
+session_start();
+
+require_once 'C:/xampp/htdocs/Curso_Online/includes/db_connect.php';
+require_once 'C:/xampp/htdocs/Curso_Online/class/Validator.php';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Initialize validator and error array
     $validator = new Validator();
     $errors = [];
-
-    // Validate inputs
+    
+    // Validações
     $nome = $validator->validateName($_POST['nome'] ?? '');
     $email = $validator->validateEmail($_POST['email'] ?? '');
     $senha = $validator->validatePassword($_POST['senha'] ?? '', $_POST['confirmar_senha'] ?? '');
     $telefone = $validator->validatePhone($_POST['telefone'] ?? '');
-
     $errors = $validator->getErrors();
 
     if (empty($errors)) {
         try {
-            // Check database connection
             if (!$conn) {
                 throw new Exception("Database connection failed");
             }
 
-            // Check if email exists
-            $stmt = $conn->prepare("SELECT id FROM usuarios WHERE email_usuario = ?");
+            // Verifica se email existe
+            $stmt = $conn->prepare("SELECT usuario_id FROM usuarios WHERE email_usuario = ?");
             if (!$stmt) {
                 throw new Exception("Prepare statement failed");
             }
-
             $stmt->execute([$email]);
-
+            
             if ($stmt->rowCount() > 0) {
                 $errors['email'] = "Este email já está cadastrado.";
             } else {
-                // Hash password
+                // Hash da senha
                 $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
-
-                // Insert new user
+                
+                // Insere novo usuário
                 $stmt = $conn->prepare("INSERT INTO usuarios (nome_usuario, email_usuario, senha, telefone) VALUES (?, ?, ?, ?)");
                 if (!$stmt) {
                     throw new Exception("Prepare statement failed");
                 }
-
+                
                 if ($stmt->execute([$nome, $email, $senha_hash, $telefone])) {
-                    $user_id = $conn->lastInsertId(); // Changed from $pdo to $conn
-
-                    if ($stmt->execute([$token, $user_id])) {
-                        // Armazena os dados do usuário e produto na sessão para uso posterior
-                        $_SESSION['mercado_pago_data'] = [
-                            'user_id' => $user_id,
-                            'username' => $nome,
-                            'email' => $email,
-                            'produto_nome' => "Curso Online", // Substitua pelo nome real
-                            'produto_preco' => 100.00, // Substitua pelo preço real
-                            'token' => $token
-                        ];
-
-                     header("Location: Processa_Api.php/Metodo_Pagamento.php");
-                        exit;
-                    }
+                    $user_id = $conn->lastInsertId();
+                    
+                    // Armazena dados na sessão
+                    $_SESSION['mercado_pago_data'] = [
+                        'user_id' => $user_id,
+                        'username' => $nome,
+                        'email' => $email,
+                        'produto_nome' => "Curso Online",
+                        'produto_preco' => 100.00
+                    ];
+                    
+                    // Mostra mensagem de sucesso e redireciona
+                    echo '<!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Cadastro</title>
+                        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+                    </head>
+                    <body>
+                        <script>
+                            Swal.fire({
+                                title: "Sucesso!",
+                                text: "Dados cadastrados com sucesso!",
+                                icon: "success",
+                                confirmButtonText: "OK",
+                                confirmButtonColor: "#3085d6"
+                            }).then(() => {
+                                window.location.href = "Processa_Api/Metodo_Pagamento.php";
+                            });
+                        </script>
+                    </body>
+                    </html>';
+                    exit;
                 } else {
                     $errors['db'] = "Erro ao cadastrar. Tente novamente mais tarde.";
                 }
@@ -67,8 +84,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors['db'] = "Ocorreu um erro inesperado. Por favor, tente novamente.";
         }
     }
-
     
+    // Se houver erros, armazena na sessão e redireciona
     $_SESSION['form_errors'] = $errors;
     $_SESSION['form_data'] = $_POST;
     header("Location: register.php");
@@ -78,6 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!DOCTYPE html>
 <html lang="pt-BR">
+<!-- Restante do seu HTML permanece igual -->
 
 <head>
     <meta charset="UTF-8">
@@ -103,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             <?php endif; ?>
 
-            <form method="POST" action="register.php" class="auth-form">
+            <form method="POST" action="" class="auth-form">
                 <div class="auth-form__group">
                     <label for="nome" class="auth-form__label">Nome Completo</label>
                     <input type="text" id="nome" name="nome" class="auth-form__input" required

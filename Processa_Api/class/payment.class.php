@@ -1,6 +1,5 @@
 <?php
-session_start();
-require_once 'includes/db_connect.php';
+require_once 'C:/xampp/htdocs/Curso_Online/includes/db_connect.php';
 class payment
 {
     private $user_id = null;
@@ -29,21 +28,35 @@ class payment
     }
     public function addPayment($valor)
     {
-        $query = $this->conn->prepare("INSERT Into payment (user_id, valor) values(:valor, :user_id) ");
+        // Primeiro verifique se user_id está definido e é válido
+        if (empty($this->user_id)) {
+            throw new Exception("ID do usuário não fornecido");
+        }
+        // Verifique se o usuário existe
+        $checkUser = $this->conn->prepare("SELECT usuario_id FROM usuarios WHERE usuario_id = ?");
+        $checkUser->execute([$this->user_id]);
+        if ($checkUser->rowCount() === 0) {
+            throw new Exception("Usuário não encontrado com ID: " . $this->user_id);
+        }
+        // Corrigindo a ordem dos parâmetros
+        $query = $this->conn->prepare("INSERT INTO pagamentos (usuario_id, valor) VALUES (:user_id, :valor)");
+        $query->bindValue(':user_id', $this->user_id, PDO::PARAM_INT);
         $query->bindValue(':valor', $valor);
-        $query->bindvalue(':user_id', $this->user_id);
+
         if ($query->execute()) {
-            return $this->conn->lastInsertId();           
+            return $this->conn->lastInsertId();
         } else {
-            return false;
+            // Para debug - mostre o erro específico
+            $error = $query->errorInfo();
+            throw new Exception("Erro ao criar pagamento: " . $error[2]);
         }
     }
     public function updadtePayment($status)
     {
 
-        $query = $this->conn->prepare("UPDATE  payment set status= :status where id_payment = :id ");
+        $query = $this->conn->prepare("UPDATE  pagamentos set status= :status where id = :id ");
         $query->bindValue(':status', $status);
-        $query->bindvalue(':payment_id', $this->payment_id);
+        $query->bindvalue(':id', $this->payment_id);
         if ($query->execute()) {
             return true;
         } else {
