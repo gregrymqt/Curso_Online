@@ -11,6 +11,7 @@ const renderPaymentBrick = async (bricksBuilder) => {
            com exceção da Conta Mercado Pago e Parcelamento sem cartão de crédito, que tem seu valor de processamento determinado no backend através do "preferenceId"
             */
             amount: parseFloat($("#valor_payment").val()),
+            preferenceId: $("#preference_id").val(),
         },
         customization: {
             paymentMethods: {
