@@ -12,6 +12,8 @@ const renderPaymentBrick = async (bricksBuilder) => {
             */
             amount: parseFloat($("#valor_payment").val()),
             preferenceId: $("#preference_id").val(),
+            
+
         },
         customization: {
             paymentMethods: {
@@ -31,54 +33,50 @@ const renderPaymentBrick = async (bricksBuilder) => {
                 */
             },
             onSubmit: ({ selectedPaymentMethod, formData }) => {
-                // callback chamado ao clicar no botão de submissão dos dados
-                return new Promise((resolve, reject) => {
-                    fetch("", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify(formData),
-                    })
-                        .then((response) => response.json())
-                        .then((response) => {
-
-
-                            const renderStatusScreenBrick = async (bricksBuilder) => {
-                                const settings = {
-                                    initialization: {
-                                        paymentId: response.id, // id do pagamento a ser mostrado
-                                    },
-                                    callbacks: {
-                                        onReady: () => {
-                                            /*
-                                              Callback chamado quando o Brick estiver pronto.
-                                              Aqui você pode ocultar loadings do seu site, por exemplo.
-                                            */
-                                        },
-                                        onError: (error) => {
-                                            // callback chamado para todos os casos de erro do Brick
-                                            console.error(error);
-                                        },
-                                    },
-                                };
-                                window.statusScreenBrickController = await bricksBuilder.create(
-                                    'statusScreen',
-                                    'statusScreenBrick_container',
-                                    settings,
-                                );
-                            };
-                            renderStatusScreenBrick(bricksBuilder);
-
-
-                            resolve();
-                        })
-                        .catch((error) => {
-                            // lidar com a resposta de erro ao tentar criar o pagamento
-                            reject();
-                        });
-                });
+    return new Promise((resolve, reject) => {
+        fetch("", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
             },
+            body: JSON.stringify(formData),
+        })
+        .then((response) => response.json())
+        .then((response) => {
+            if (!response || !response.paymentId) {
+                throw new Error('ID de pagamento não recebido');
+            }
+
+            const renderStatusScreenBrick = async (bricksBuilder) => {
+                const settings = {
+                    initialization: {
+                        paymentId: response.paymentId, // ID correto da resposta
+                    },
+                    callbacks: {
+                        onReady: () => {
+                            console.log('Status Screen pronto');
+                        },
+                        onError: (error) => {
+                            console.error(error);
+                        },
+                    },
+                };
+                window.statusScreenBrickController = await bricksBuilder.create(
+                    'statusScreen',
+                    'statusScreenBrick_container',
+                    settings,
+                );
+            };
+            
+            renderStatusScreenBrick(bricksBuilder);
+            resolve();
+        })
+        .catch((error) => {
+            console.error('Erro:', error);
+            reject();
+        });
+    });
+},
             onError: (error) => {
                 // callback chamado para todos os casos de erro do Brick
                 console.error(error);

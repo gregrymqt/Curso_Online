@@ -2,9 +2,13 @@
 session_start();
 $card = true;
 require_once 'preferences.php';
+require_once __DIR__ . '/../vendor/autoload.php';
+
 if (isset($body->token)) {
 
   $curl = curl_init();
+
+
 
   curl_setopt_array($curl, array(
     CURLOPT_URL => 'https://api.mercadopago.com/v1/payments',
@@ -17,11 +21,11 @@ if (isset($body->token)) {
     CURLOPT_CUSTOMREQUEST => 'POST',
     CURLOPT_POSTFIELDS => '{
   "description": "Payment for product",
-  "installments":'.$body->installments .',
+  "installments":' . $body->installments . ',
   "payer": {
-    "email": "' . $body->payer->email. '",
+    "email": "' . $body->payer->email . '",
     "identification": {
-      "type": "' . $body->payer->identification->type. '",
+      "type": "' . $body->payer->identification->type . '",
       "number": "' . $body->payer->identification->number . '"
     }
   },
@@ -32,16 +36,63 @@ if (isset($body->token)) {
 }',
     CURLOPT_HTTPHEADER => array(
       'Content-Type: application/json',
-      'Authorization: Bearer ' . $accesstoken
+      'Authorization: Bearer ' . $accesstoken,
+      'X-Idempotency-Key: 0d5020ed-1af6-469c-ae06-c3bec19954bb',
     ),
   ));
 
-  $response = curl_exec($curl);
+  // Executa a requisição cURL
+  header('Content-Type: application/json');
 
-  curl_close($curl);
-  echo $response;
+// 1. Executa a requisição cURL
+$response = curl_exec($curl);
+$error = curl_error($curl);
+$httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+curl_close($curl);
 
-  die;
+// 2. Tratamento de erros
+if ($response === false) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Erro na comunicação com o gateway de pagamento',
+          ]);
+    exit;
+}
+
+// 3. Validação da resposta
+if (empty($response)) {
+    http_response_code(502);
+    echo json_encode(['success' => false, 'error' => 'Resposta inválida do servidor']);
+    exit;
+}
+
+$paymentData = json_decode($response);
+if (json_last_error() !== JSON_ERROR_NONE) {
+    http_response_code(502);
+    echo json_encode(['success' => false, 'error' => 'Dados de pagamento corrompidos']);
+    exit;
+}
+
+// 4. Filtra dados sensíveis (OBRIGATÓRIO)
+$safeData = [
+    'id' => $paymentData->id ?? null,
+    'status' => $paymentData->status ?? null,
+    'amount' => $paymentData->transaction_amount ?? null,
+    'payment_method' => $paymentData->payment_method_id ?? null,
+    'date_approved' => $paymentData->date_approved ?? null,
+    'payer' => [
+        'email' => $paymentData->payer->email ?? null
+    ]
+];
+
+// 5. Retorno seguro para o frontend
+http_response_code($httpCode);
+echo json_encode([
+    'success' => true,
+    'payment' => $safeData,
+]);
+exit;
 
 }
 
@@ -63,6 +114,8 @@ if (isset($body->token)) {
 
   <input type="hidden" id="valor_payment" value="<?= $amount; ?>">
   <input type="hidden" id="preference_id" value="<?= $preference_id; ?>">
+
+
 
 
   <div class="card_page_payment">
