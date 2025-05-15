@@ -1,10 +1,10 @@
 <?php
+session_start();
 $config = require_once('../config.php');
 require_once 'C:/xampp/htdocs/Curso_Online/includes/db_connect.php';
 require_once 'C:/xampp/htdocs/Curso_Online/Processa_Api/class/payment.class.php';
 
 $accesstoken = $config['accesstoken'];
-
 
 $body = json_decode(file_get_contents("php://input"));
 
@@ -22,7 +22,6 @@ if (!isset($body->token)) {
     }
   }
 
-
   $amount = (float) trim($_SESSION['mercado_pago_data']['produto_preco']);
   $email = $_SESSION['mercado_pago_data']['email'];
   $user_id = $_SESSION['mercado_pago_data']['user_id'];
@@ -31,7 +30,6 @@ if (!isset($body->token)) {
   $payCreate = $payment->addPayment($amount);
 
   if ($payCreate) {
-
 
     $curl = curl_init();
 
@@ -103,9 +101,7 @@ if (!isset($body->token)) {
           echo "<a href='{$link_externo}' target='_blank'>Link Externo</a>";
 
         }
-
       }
     }
   }
-
 }

@@ -1,7 +1,5 @@
-
 const mp = new MercadoPago('APP_USR-9237cffa-5ad4-4056-956b-20d62d1d0dab');
 const bricksBuilder = mp.bricks();
-
 
 const renderPaymentBrick = async (bricksBuilder) => {
     const settings = {
@@ -11,9 +9,7 @@ const renderPaymentBrick = async (bricksBuilder) => {
            com exceção da Conta Mercado Pago e Parcelamento sem cartão de crédito, que tem seu valor de processamento determinado no backend através do "preferenceId"
             */
             amount: parseFloat($("#valor_payment").val()),
-            preferenceId: $("#preference_id").val(),
-            
-
+            preferenceId: $("#preference_id").val(),          
         },
         customization: {
             paymentMethods: {
@@ -43,14 +39,14 @@ const renderPaymentBrick = async (bricksBuilder) => {
         })
         .then((response) => response.json())
         .then((response) => {
-            if (!response || !response.paymentId) {
+            if (!response.id) {
                 throw new Error('ID de pagamento não recebido');
             }
 
             const renderStatusScreenBrick = async (bricksBuilder) => {
                 const settings = {
                     initialization: {
-                        paymentId: response.paymentId, // ID correto da resposta
+                        paymentId: response.id, // ID correto da resposta
                     },
                     callbacks: {
                         onReady: () => {
@@ -66,8 +62,7 @@ const renderPaymentBrick = async (bricksBuilder) => {
                     'statusScreenBrick_container',
                     settings,
                 );
-            };
-            
+            }; 
             renderStatusScreenBrick(bricksBuilder);
             resolve();
         })

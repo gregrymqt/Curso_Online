@@ -7,7 +7,7 @@ $user_id = isset($_SESSION['mercado_pago_data']['user_id']) ? $_SESSION['mercado
 $amount = isset($_SESSION['mercado_pago_data']['produto_preco']) ? $_SESSION['mercado_pago_data']['produto_preco'] : 0;
 $email = isset($_SESSION['mercado_pago_data']['email']) ? $_SESSION['mercado_pago_data']['email'] : 'Nenhum email passado';
 $username = isset($_SESSION['mercado_pago_data']['username']) ? $_SESSION['mercado_pago_data']['username'] : 'Nenhum username passado';
-$produto_nome = 100;
+$produto_nome = isset($_SESSION['mercado_pago_data']['produto_nome']) ? $_SESSION['mercado_pago_data']['produto_nome'] : 'nenhum nome passado';
 
 
 ?>
