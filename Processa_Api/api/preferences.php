@@ -9,21 +9,8 @@ $accesstoken = $config['accesstoken'];
 $body = json_decode(file_get_contents("php://input"));
 
 if (!isset($body->token)) {
-  if (!isset($_SESSION['mercado_pago_data']['produto_preco'])) {
-    echo "O valor não existe!";
-    die;
-  } else {
-    if (empty($_SESSION['mercado_pago_data']['produto_preco']) || !is_numeric($_SESSION['mercado_pago_data']['produto_preco'])) {
-      die("O valor não poder ser vazio e tem que ser numerico! ");
-    } else {
-      if ($_SESSION['mercado_pago_data']['produto_preco'] < 1) {
-        die("O valor não pode ser menor que 1 ");
-      }
-    }
-  }
 
-  $amount = (float) trim($_SESSION['mercado_pago_data']['produto_preco']);
-  $email = $_SESSION['mercado_pago_data']['email'];
+  $amount = (float) 100;
   $user_id = $_SESSION['mercado_pago_data']['user_id'];
   $payment = new payment($user_id);
 

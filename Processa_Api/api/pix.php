@@ -111,7 +111,7 @@ if ($_POST['csrf_token'] !== $_SESSION['csrf_token']) {
       <p>ID do pagamento: <?php echo htmlspecialchars($payment_id); ?></p>
       <p>Escaneie o QR Code abaixo ou clique no link para pagar:</p>
       <a href="<?php echo htmlspecialchars($ticket_url); ?>" target="_blank">Abrir pagamento PIX</a>
-      <img src="data:image/jpeg;base64,<?php echo htmlspecialchars($qr_code_base64); ?>" alt="QR Code PIX">
+      <img id="qr-code-img" src="data:image/jpeg;base64,<?php echo htmlspecialchars($qr_code_base64); ?>" alt="QR Code PIX">
       <div>
         <label for="pix-code">Código PIX (copie e cole no seu app):</label>
         <input type="text" id="pix-code" value="<?php echo htmlspecialchars($qr_code); ?>" readonly>
@@ -133,5 +133,4 @@ if ($_POST['csrf_token'] !== $_SESSION['csrf_token']) {
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="../js/pix.js"></script>
 </body>
-
 </html>
