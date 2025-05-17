@@ -1,50 +1,117 @@
 <?php
 session_start();
-if (empty($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-}
-require __DIR__ . '/vendor/autoload.php'; // Caminho correto para o autoload
-$config = require_once('../config.php');
-$accesstoken = $config['accesstoken'];
 
-use MercadoPago\Client\Payment\PaymentClient;
-use MercadoPago\Client\Common\RequestOptions;
+// 1. Configurações de Segurança
+if (empty($_SESSION['csrf_token'])) {
+  $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+// 2. Inclusão de dependências
+require __DIR__ . '/vendor/autoload.php';
+require_once 'C:/xampp/htdocs/Curso_Online/includes/db_connect.php';
+$config = require_once('../config.php');
+
 use MercadoPago\MercadoPagoConfig;
 
-MercadoPagoConfig::setAccessToken($accesstoken);
+// 3. Configuração do SDK
+MercadoPagoConfig::setAccessToken($config['accesstoken']);
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  // No processamento:
-if ($_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-    die("Token inválido!");
+// 4. Validação do Método HTTP
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+  http_response_code(405);
+  die(json_encode(['error' => 'Método não permitido']));
 }
-  try {
-    $client = new PaymentClient();
-    $request_options = new RequestOptions();
-    $request_options->setCustomHeaders(["X-Idempotency-Key: " . bin2hex(random_bytes(16))]);
 
-    $payment = $client->create([
-      "transaction_amount" => (float) $_POST['transactionAmount'],
-      "payment_method_id" => "pix", // Forçando método PIX
-      "payer" => [
-        "first_name" => $_POST['payerFirstName'],
-        "last_name" => $_POST['payerLastName'],
-        "email" => $_POST['email'],
-        "identification" => [
-          "type" => $_POST['identificationType'],
-          "number" => $_POST['identificationNumber']
-        ]
+// 5. Validação do CSRF Token
+if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+  http_response_code(403);
+  die(json_encode(['error' => 'Token CSRF inválido']));
+}
+
+// 6. Obter e validar dados da requisição
+$required_fields = ['transactionAmount', 'email', 'payerFirstName', 'identificationType',
+ 'identificationNumber', 'payerLastName', 'description'];
+foreach ($required_fields as $field) {
+  if (empty($_POST[$field])) {
+    http_response_code(400);
+    die(json_encode(['error' => "O campo $field é obrigatório"]));
+  }
+}
+
+try {
+  // 7. Preparar dados para o PIX
+  $pix_data = (object) [
+    'description' => htmlspecialchars($_POST['description']),
+    "payment_method_id" => "pix", // Forçando método PIX
+    'payer' => (object) [
+      'email' => filter_var($_POST['email'], FILTER_SANITIZE_EMAIL),
+      'first_name' => htmlspecialchars($_POST['payerFirstName']),
+      'last_name' => htmlspecialchars($_POST['payerLastName']),
+      'identification' => (object) [
+        'type' => $_POST['identificationType'],
+        'number' => preg_replace('/[^0-9]/', '', $_POST['identificationNumber'])
       ]
-    ], $request_options);
+    ]
+  ];
 
-    // Extrai os dados do PIX
-    $ticket_url = $payment->point_of_interaction->transaction_data->ticket_url ?? null;
-    $qr_code_base64 = $payment->point_of_interaction->transaction_data->qr_code_base64 ?? null;
-    $qr_code = $payment->point_of_interaction->transaction_data->qr_code ?? null;
-    $payment_id = $payment->id;
+  // 8. Processar pagamento
+  $payment = new PixPayment($_SESSION['user_id'] ?? null);
+  $result = $payment->createPayment(
+    floatval(filter_var($_POST['amount'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)),
+    $pix_data
+  );
 
-  } catch (Exception $e) {
-    $error = $e->getMessage();
+  // 9. Resposta com dados do PIX
+  $ticket_url = $result->point_of_interaction->transaction_data->ticket_url ?? null;
+  $qr_code_base64 = $result->point_of_interaction->transaction_data->qr_code_base64 ?? null;
+  $qr_code = $result->point_of_interaction->transaction_data->qr_code ?? null;
+  $payment_id = $result->id;
+  $expiration_date = $result->date_of_expiration;
+
+
+} catch (Exception $e) {
+  http_response_code(500);
+  echo json_encode([
+    'error' => 'Erro ao processar PIX',
+    'details' => $e->getMessage()
+  ]);
+}
+
+class PixPayment extends PaymentHandler
+{
+  public function createPayment($amount, $payer_data)
+  {
+    $this->validateUser();
+
+    try {
+      $payment_data = $this->preparePaymentData($amount, $payer_data);
+      $payment = $this->paymentClient->create($payment_data);
+
+      $this->savePaymentToDatabase($payment_data, $payment);
+
+      return $payment;
+
+    } catch (Exception $e) {
+      throw new Exception("Erro ao criar pagamento com PIX: " . $e->getMessage());
+    }
+  }
+
+  protected function preparePaymentData($amount, $payer_data)
+  {
+    return [
+      "transaction_amount" => (float) $amount,
+      "description" => "Pagamento do curso",
+      "payment_method_id" => "pix",
+      "payer" => [
+        "email" => $payer_data->payer->email,
+        "first_name" => $payer_data->payer->first_name,
+        "identification" => [
+          "type" => $payer_data->payer->identification->type,
+          "number" => $payer_data->payer->identification->number
+        ]
+      ],
+      "notification_url" => "https://lucianavenanciopsipp.com.br"
+    ];
   }
 }
 ?>
@@ -55,7 +122,7 @@ if ($_POST['csrf_token'] !== $_SESSION['csrf_token']) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
-<link rel="stylesheet" href="../css/pix.css">
+  <link rel="stylesheet" href="../css/pix.css">
 </head>
 
 <body>
@@ -92,7 +159,7 @@ if ($_POST['csrf_token'] !== $_SESSION['csrf_token']) {
       <div>
         <div>
           <input type="hidden" name="transactionAmount" id="transactionAmount" value="100">
-          <input type="hidden" name="description" id="description" value="Nome do Produto">
+          <input type="hidden" name="description" id="description" value="Curso ">
           <button type="submit" id="submit-button">Pagar</button>
         </div>
       </div>
@@ -111,7 +178,17 @@ if ($_POST['csrf_token'] !== $_SESSION['csrf_token']) {
       <p>ID do pagamento: <?php echo htmlspecialchars($payment_id); ?></p>
       <p>Escaneie o QR Code abaixo ou clique no link para pagar:</p>
       <a href="<?php echo htmlspecialchars($ticket_url); ?>" target="_blank">Abrir pagamento PIX</a>
-      <img id="qr-code-img" src="data:image/jpeg;base64,<?php echo htmlspecialchars($qr_code_base64); ?>" alt="QR Code PIX">
+      <img id="qr-code-img" src="data:image/jpeg;base64,<?php echo htmlspecialchars($qr_code_base64); ?>"
+        alt="QR Code PIX">
+
+      <!-- Adicionando a data de expiração -->
+      <?php if (!empty($expiration_date)): ?>
+        <p class="expiration-warning">⏰ Válido até: <?php
+        $date = new DateTime($expiration_date);
+        echo htmlspecialchars($date->format('d/m/Y H:i:s'));
+        ?></p>
+      <?php endif; ?>
+
       <div>
         <label for="pix-code">Código PIX (copie e cole no seu app):</label>
         <input type="text" id="pix-code" value="<?php echo htmlspecialchars($qr_code); ?>" readonly>
@@ -133,4 +210,5 @@ if ($_POST['csrf_token'] !== $_SESSION['csrf_token']) {
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="../js/pix.js"></script>
 </body>
+
 </html>

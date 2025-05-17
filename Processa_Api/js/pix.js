@@ -15,11 +15,43 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
       
-    createSelectOptions(identificationTypeElement, identificationTypes);
-  } catch (e) {
-    return console.error('Error getting identificationTypes: ', e);
+      createSelectOptions(identificationTypeElement, identificationTypes);
+    } catch (e) {
+      return console.error('Error getting identificationTypes: ', e);
+    }
+  })();
+
+  // Função para renderizar o Status Screen Brick
+  const renderStatusScreenBrick = async (bricksBuilder) => {
+    const settings = {
+      initialization: {
+        paymentId: 'id', // id do pagamento a ser mostrado
+      },
+      callbacks: {
+        onReady: () => {
+          /*
+            Callback chamado quando o Brick estiver pronto.
+            Aqui você pode ocultar loadings do seu site, por exemplo.
+          */
+        },
+        onError: (error) => {
+          // callback chamado para todos os casos de erro do Brick
+          console.error(error);
+        },
+      },
+    };
+    window.statusScreenBrickController = await bricksBuilder.create(
+      'statusScreen',
+      'statusScreenBrick_container',
+      settings,
+    );  
+  };
+    // Verifica se bricksBuilder está disponível antes de chamar
+  if (typeof bricksBuilder !== 'undefined') {
+    renderStatusScreenBrick(bricksBuilder);
+  } else {
+    console.error('bricksBuilder não está definido');
   }
-})();
 });
 
 function createSelectOptions(elem, options, labelsAndKeys = { label: "name", value: "id" }) {

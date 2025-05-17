@@ -21,6 +21,16 @@
     margin: 5px 0;
 }
 
+    .expiration-warning {
+        color: #d35400;
+        font-weight: bold;
+        margin: 10px 0;
+        padding: 8px;
+        background-color: #fff3e0;
+        border-radius: 4px;
+        display: inline-block;
+    }
+
 .loading {
     display: none;
     color: #666;

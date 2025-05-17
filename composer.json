@@ -1,6 +1,6 @@
 {
     "require": {
         "ramsey/uuid": "^4.7",
-        "mercadopago/dx-php": "^3.3"
+        "mercadopago/dx-php": "^3.4"
     }
 }
